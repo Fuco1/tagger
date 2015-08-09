@@ -34,6 +34,11 @@ The basic layout of the repository is as follows:
   of the file is the same as inside the "real" storage, prefixed with
   the *data* hash.  This helps us to map filenames to real files in
   the repository during searches.
+- Files are not stored repeatedly but with hard links.  This also means
+  you can maintain a regular hierarchy parallel with the tagger
+  repository sharing the data blocks on the HDD to save space... so
+  even if the entire repository is blown to pieces, you still have
+  your data stored somewhere in the "regular" filesystem.
 
 And that's it.
 
