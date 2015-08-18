@@ -78,7 +78,8 @@ def get_file_from_fuse_path(repository, fuse_path):
 
 def get_all_tags(repository):
     """Return all tags"""
-    tags = os.listdir(repository)
+    tags = [d for d in os.listdir(repository)
+            if path.isdir(path.join(repository, d))]
     tags.remove('.names')
     return frozenset(tags)
 
