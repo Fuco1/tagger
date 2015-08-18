@@ -7,6 +7,7 @@ import errno
 from fuse import FUSE, FuseOSError, Operations
 
 import tagutils
+import sql
 
 
 class Passthrough(Operations):
@@ -131,6 +132,10 @@ class Passthrough(Operations):
 class Tagger(Operations):
 
     def __init__(self, repository, mountpoint):
+        # TODO: add routine to automatically fill the DB with data if
+        # empty.  Should probably require us to run the program with
+        # some switch
+        sql.init(repository)
         self.repository = repository
         self.mountpoint = mountpoint
 
@@ -138,9 +143,21 @@ class Tagger(Operations):
         pass
 
     def fuse_path_to_real(self, path):
-        return tagutils.get_file_from_fuse_path(self.repository, path)
+        # return tagutils.get_file_from_fuse_path(self.repository, path)
+        basetag = path.split("/")[1]
+        basename = os.path.basename(path)
+        with sql.get_connection(self.repository) as con:
+            # TODO: should depend on tags too
+            filehash = sql.file_get_hash(con, basename)
+            if filehash is not None:
+                re = os.path.join(self.repository,
+                                  basetag,
+                                  filehash[:2],
+                                  filehash + basename)
+                return re
+            else:
+                return None
 
-    # TODO: make the attributes reflect the data inside... but how?
     def getattr(self, path, fh=None):
         # we need to figure out if this is a file or a tag or some
         # meta-nonsense
@@ -151,14 +168,22 @@ class Tagger(Operations):
             st = os.lstat(os.path.join(self.repository, base))
         else:
             full_path = self.fuse_path_to_real(path)
-            st = os.lstat(full_path)
+            if full_path is not None:
+                st = os.lstat(full_path)
+            else:
+                return {}
         return dict((key, getattr(st, key)) for key in (
             'st_atime', 'st_ctime', 'st_gid', 'st_mode',
             'st_mtime', 'st_nlink', 'st_size', 'st_uid'))
 
     def readdir(self, path, fh):
         directories = tagutils.get_possible_tags(self.repository, path)
-        files = [x[40:] for x in tagutils.query(self.repository, path)]
+        # files = [x[40:] for x in tagutils.query(self.repository, path)]
+        files = []
+        for (f, _) in sql.get_tagged_files(
+                self.repository,
+                [x for x in path.split('/') if x != '']):
+            files.append(f)
         return list(directories) + files
 
     def open(self, path, flags):
