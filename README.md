@@ -5,7 +5,7 @@
 Filesystem using tags and fuse!
 
 This system is built with two simple premises in mind:
-- no metadata other than the filesystem itself
+- no metadata other than the filesystem itself[^1]
 - no complicated usage patterns, just mount one dir and that's it
 
 The major downsides of all solutions known to me is that they require
@@ -42,6 +42,8 @@ The basic layout of the repository is as follows:
 
 And that's it.
 
+TODO: explain how to query for files using fuse
+
 # Algorithms
 
 TODO
@@ -50,3 +52,8 @@ TODO
 
 - [Tagsistant](https://github.com/StrumentiResistenti/Tagsistant): Definitely the most mature option out there.
 - [dantalian](https://github.com/darkfeline/dantalian): File organization and tagging using hard links
+
+[^1]: To make this system reasonably efficient, we use sqlite database
+to cache and preprocess data to speed up queries.  However, if you
+lose the database file, nothing of value is lost as it can be
+completely recovered from just the layout of the files.
