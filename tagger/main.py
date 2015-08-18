@@ -2,6 +2,7 @@ import os
 import os.path as path
 import hashutils
 
+
 # TODO: make an executable out of this
 def tag_file(repository, file_path, tag):
     """Tag a file.
